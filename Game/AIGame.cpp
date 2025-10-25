@@ -138,6 +138,7 @@ void AIGame::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                     break;
                 case 'G':
                     sprite = enemy;
+                    break;
                 default:
                     continue;
             }
