@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     sf::RenderWindow window(sf::VideoMode(game.width() * 64, game.height() * 64),
-                            "AIGame Game");
+                            "Block Pusher");
 
     while (window.isOpen()) {
         sf::Event event;
