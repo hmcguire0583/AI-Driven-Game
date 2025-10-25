@@ -18,11 +18,11 @@ int main(int argc, char* argv[]) {
         !boxT.loadFromFile("Crate.png") ||
         !emptyT.loadFromFile("floor.png") ||
         !storageT.loadFromFile("Storage.png") ||
-        !playerT.loadFromFile("player_05.png") ||
-        !up.loadFromFile("player_08.png") ||
-        !down.loadFromFile("player_05.png") ||
-        !left.loadFromFile("player_20.png") ||
-        !right.loadFromFile("player_17.png")) {
+        !playerT.loadFromFile("P_down.png") ||
+        !up.loadFromFile("P_up.png") ||
+        !down.loadFromFile("P_down.png") ||
+        !left.loadFromFile("P_left.png") ||
+        !right.loadFromFile("P_right.png")) {
         return EXIT_FAILURE;
     }
 
