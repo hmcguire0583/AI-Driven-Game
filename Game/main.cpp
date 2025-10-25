@@ -48,14 +48,20 @@ int main(int argc, char* argv[]) {
 
     input_file.close();
 
-    sf::SoundBuffer winBuffer;
+    sf::SoundBuffer winBuffer, failBuffer;
     if (!winBuffer.loadFromFile("sound.wav")) {
         return EXIT_FAILURE;
     }
 
-    sf::Sound winSound;
+    if (!failBuffer.loadFromFile("fail-trumpet-242645.wav")) {
+        return EXIT_FAILURE;
+    }
+
+    sf::Sound winSound, failSound;
     winSound.setBuffer(winBuffer);
+    failSound.setBuffer(failBuffer);
     bool winSoundPlayed = false;
+    bool failSoundPlayed = false;
 
     sf::Font font;
     if (!font.loadFromFile("OpenSans-Bold.ttf")) {
@@ -113,8 +119,11 @@ int main(int argc, char* argv[]) {
                                     (window.getSize().y - LoserText.getLocalBounds().height) / 2);
             window.draw(LoserText);
             sf::sleep(sf::seconds(0.1));
+            if (!failSoundPlayed) {
+                failSound.play();
+                failSoundPlayed = true;
+            }
         }
-
         window.display();
     }
 }
