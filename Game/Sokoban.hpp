@@ -1,0 +1,56 @@
+#ifndef SOKOBAN_HPP
+#define SOKOBAN_HPP
+
+#include <stack>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window/Keyboard.hpp>
+#include <SFML/Audio.hpp>
+
+namespace SB {
+
+enum Direction { Up, Down, Left, Right };
+
+class Sokoban : public sf::Drawable {
+public:
+    sf::Sprite wall;
+    sf::Sprite box;
+    sf::Sprite empty;
+    sf::Sprite storage;
+    sf::Sprite player;
+
+    Sokoban();
+
+    int height() const;
+    int width() const;
+    sf::Vector2u playerLoc() const;
+    void movePlayer(Direction direction);
+    bool isWon();
+
+    friend std::ifstream& operator>>(std::ifstream& in, Sokoban& sokoban);
+    friend std::ostream& operator<<(std::ostream& out, const Sokoban& sokoban);
+
+    int getArrayIndex(int x, int y) const;
+    void convertToMatrixSpace(int i, int& x, int& y) const;
+    void reset(const std::string& filePath);
+    void undoMove();
+
+protected:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+
+private:
+    int h;
+    int w;
+    std::vector<char> gameMatrix;
+    std::stack<std::vector<char>> gameMatrixStack;
+    std::stack<sf::Vector2f> playerPositions;
+    std::stack<Direction> playerDirections;
+};
+
+} // namespace SB
+
+#endif // SOKOBAN_HPP
