@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     sf::Texture wallT, boxT, emptyT, storageT, playerT, up, down, left, right;
     if (!wallT.loadFromFile("Wall.png") ||
         !boxT.loadFromFile("Crate.png") ||
-        !emptyT.loadFromFile("floorTile.png") ||
+        !emptyT.loadFromFile("floor.png") ||
         !storageT.loadFromFile("Storage.png") ||
         !playerT.loadFromFile("player_05.png") ||
         !up.loadFromFile("player_08.png") ||
