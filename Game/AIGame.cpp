@@ -95,6 +95,13 @@ void AIGame::movePlayer(Direction direction) {
     }
 }
 
+bool AIGame::isGameOver(){
+    if (this -> enemyLoc() == this -> playerLoc()) {
+        return true;
+    } 
+    return false;
+}
+
 bool AIGame::isWon() {
     int numBoxes = std::count_if(gameMatrix.begin(), gameMatrix.end(), [](char c) { return c == 'A'; });
     int numStorage = std::count_if(gameMatrix.begin(), gameMatrix.end(), [](char c) { return c == 'a'; });

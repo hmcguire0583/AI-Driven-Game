@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
                 if (event.key.code == sf::Keyboard::R) {
                     winSoundPlayed = false;
                     game.reset(level);
-                } else if (!game.isWon()) {
+                } else if (!game.isWon() && !game.isGameOver()) {
                     if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) {
                         game.player.setTexture(up);
                         game.movePlayer(SB::Direction::Up);
@@ -105,6 +105,14 @@ int main(int argc, char* argv[]) {
                 winSound.play();
                 winSoundPlayed = true;
             }
+        }
+        
+        if(game.isGameOver()){
+           sf::Text LoserText("Game Over!", font, 50);
+           LoserText.setPosition((window.getSize().x - LoserText.getLocalBounds().width) / 2,
+                                    (window.getSize().y - LoserText.getLocalBounds().height) / 2);
+            window.draw(LoserText);
+            sf::sleep(sf::seconds(0.1));
         }
 
         window.display();

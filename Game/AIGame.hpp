@@ -31,7 +31,10 @@ public:
     sf::Vector2u playerLoc() const;
     sf::Vector2u enemyLoc() const;
     void movePlayer(Direction direction);
+    void findPathAStar(sf::Vector2u start, sf::Vector2u goal);
+
     bool isWon();
+    bool isGameOver();
 
     friend std::ifstream& operator>>(std::ifstream& in, AIGame& AIGame);
     friend std::ostream& operator<<(std::ostream& out, const AIGame& AIGame);
