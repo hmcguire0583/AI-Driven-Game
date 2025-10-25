@@ -13,11 +13,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    sf::Texture wallT, boxT, emptyT, storageT, playerT, up, down, left, right;
+    sf::Texture wallT, boxT, emptyT, storageT, playerT, up, down, left, right, enemyT;
     if (!wallT.loadFromFile("Wall.png") ||
         !boxT.loadFromFile("Crate.png") ||
         !emptyT.loadFromFile("floor.png") ||
         !storageT.loadFromFile("Storage.png") ||
+        !enemyT.loadFromFile("E_Down.png") ||
         !playerT.loadFromFile("P_Down.png") ||
         !up.loadFromFile("P_Up.png") ||
         !down.loadFromFile("P_Down.png") ||
@@ -32,6 +33,7 @@ int main(int argc, char* argv[]) {
     game.empty.setTexture(emptyT);
     game.storage.setTexture(storageT);
     game.player.setTexture(playerT);
+    game.enemy.setTexture(enemyT);
     input_file >> game;
 
     sf::Vector2u playerLocation = game.playerLoc();

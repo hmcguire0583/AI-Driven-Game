@@ -22,6 +22,7 @@ public:
     sf::Sprite empty;
     sf::Sprite storage;
     sf::Sprite player;
+    sf::Sprite enemy;
 
     AIGame();
 
