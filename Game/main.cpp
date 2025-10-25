@@ -79,6 +79,7 @@ int main(int argc, char* argv[]) {
             } else if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::R) {
                     winSoundPlayed = false;
+                    failSoundPlayed = false;
                     game.reset(level);
                 } else if (!game.isWon() && !game.isGameOver()) {
                     if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) {
