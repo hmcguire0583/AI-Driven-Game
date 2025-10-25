@@ -149,7 +149,7 @@ void AIGame::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
 void AIGame::reset(const std::string& filePath) {
     static sf::Texture down;
-    if (!down.loadFromFile("P_down.png")) {
+    if (!down.loadFromFile("P_Down.png")) {
         exit(1);
     }
     player.setTexture(down);
