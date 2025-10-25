@@ -1,4 +1,4 @@
-#include "Sokoban.hpp"
+#include "AIGame.hpp"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    SB::Sokoban game;
+    SB::AIGame game;
     game.wall.setTexture(wallT);
     game.box.setTexture(boxT);
     game.empty.setTexture(emptyT);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     sf::RenderWindow window(sf::VideoMode(game.width() * 64, game.height() * 64),
-                            "Sokoban Game");
+                            "AIGame Game");
 
     while (window.isOpen()) {
         sf::Event event;
@@ -80,9 +80,7 @@ int main(int argc, char* argv[]) {
                     } else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) {
                         game.player.setTexture(right);
                         game.movePlayer(SB::Direction::Right);
-                    } else if (event.key.code == sf::Keyboard::U) {
-                        game.undoMove();
-                    }
+                    } 
                 }
             }
         }
