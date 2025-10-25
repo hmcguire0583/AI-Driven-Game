@@ -29,6 +29,7 @@ public:
     int height() const;
     int width() const;
     sf::Vector2u playerLoc() const;
+    sf::Vector2u enemyLoc() const;
     void movePlayer(Direction direction);
     bool isWon();
 

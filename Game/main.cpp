@@ -39,6 +39,11 @@ int main(int argc, char* argv[]) {
     sf::Vector2u playerLocation = game.playerLoc();
     std::cout << "Player's location: (" << playerLocation.x << ", "
               << playerLocation.y << ")" << std::endl;
+
+    sf::Vector2u enemyLocation = game.enemyLoc();
+    std::cout << "Enemy's location: (" << enemyLocation.x << ", "
+              << enemyLocation.y << ")" << std::endl;
+
     std::cout << game << std::endl;
 
     input_file.close();

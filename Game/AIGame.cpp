@@ -18,6 +18,12 @@ sf::Vector2u AIGame::playerLoc() const {
     int y = static_cast<int>(playerPos.y / 64);
     return sf::Vector2u(x, y);
 }
+sf::Vector2u AIGame::enemyLoc() const {
+    sf::Vector2f enemyPos = enemy.getPosition();
+    int x = static_cast<int>(enemyPos.x / 64);
+    int y = static_cast<int>(enemyPos.y / 64);
+    return sf::Vector2u(x, y);
+}
 
 void AIGame::movePlayer(Direction direction) {
     gameMatrixStack.push(gameMatrix);
@@ -137,6 +143,9 @@ void AIGame::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                     sprite = empty;
                     break;
                 case 'G':
+                    sprite = empty;
+                    sprite.setPosition(x * 64, y * 64);
+                    target.draw(sprite, states);
                     sprite = enemy;
                     break;
                 default:
@@ -169,18 +178,26 @@ std::ifstream& operator>>(std::ifstream& in, AIGame& AIGame) {
     in >> AIGame.h >> AIGame.w;
     AIGame.gameMatrix.resize(AIGame.h * AIGame.w);
 
-    int playerX = -1, playerY = -1;
+    int playerX = -1, playerY = -1, enemyX = -1, enemyY = -1;
     for (int i = 0; i < AIGame.h * AIGame.w; ++i) {
         in >> AIGame.gameMatrix[i];
         if (AIGame.gameMatrix[i] == '@') {
             playerX = i % AIGame.w;
             playerY = i / AIGame.w;
         }
+        if (AIGame.gameMatrix[i] == 'G') {
+            enemyX = i % AIGame.w;
+            enemyY = i / AIGame.w;
+        }
     }
 
     if (playerX != -1 && playerY != -1) {
         sf::Vector2u playerPos(playerX, playerY);
         AIGame.player.setPosition(playerPos.x * 64, playerPos.y * 64);
+    }
+    if (enemyX != -1 && enemyY != -1) {
+        sf::Vector2u enemyPos(enemyX, enemyY);
+        AIGame.enemy.setPosition(enemyPos.x * 64, enemyPos.y * 64);
     }
 
     return in;
