@@ -197,43 +197,5 @@ void Sokoban::convertToMatrixSpace(int i, int& x, int& y) const {
     y = i / w;
 }
 
-void Sokoban::undoMove() {
-    static sf::Texture up, down, left, right;
-    if (!up.loadFromFile("player_08.png") ||
-        !down.loadFromFile("player_05.png") ||
-        !left.loadFromFile("player_20.png") ||
-        !right.loadFromFile("player_17.png")) {
-        exit(1);
-    }
-
-    if (!playerPositions.empty() && !playerDirections.empty()) {
-        sf::Vector2f prevPosition = playerPositions.top();
-        playerPositions.pop();
-        player.setPosition(prevPosition);
-
-        if (!gameMatrixStack.empty()) {
-            gameMatrix = gameMatrixStack.top();
-            gameMatrixStack.pop();
-        }
-
-        Direction prevDirection = playerDirections.top();
-        playerDirections.pop();
-
-        switch (prevDirection) {
-            case Up:
-                player.setTexture(up);
-                break;
-            case Down:
-                player.setTexture(down);
-                break;
-            case Left:
-                player.setTexture(left);
-                break;
-            case Right:
-                player.setTexture(right);
-                break;
-        }
-    }
-}
 
 } // namespace SB

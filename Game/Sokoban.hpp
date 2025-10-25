@@ -37,7 +37,6 @@ public:
     int getArrayIndex(int x, int y) const;
     void convertToMatrixSpace(int i, int& x, int& y) const;
     void reset(const std::string& filePath);
-    void undoMove();
 
 protected:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
