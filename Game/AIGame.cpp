@@ -32,6 +32,7 @@ void AIGame::movePlayer(Direction direction) {
 
     auto moveP = [this](int x, int y) {
         sf::Vector2f newPos = player.getPosition() + sf::Vector2f(x, y);
+        sf::Vector2u ghost = enemyLoc();
         int newX = newPos.x / 64;
         int newY = newPos.y / 64;
         int boxX = newX + x / 64;
@@ -48,7 +49,10 @@ void AIGame::movePlayer(Direction direction) {
             gameMatrix[getArrayIndex(boxX, boxY)] != 'A' &&
             gameMatrix[getArrayIndex(boxX, boxY)] != '#' &&
             gameMatrix[getArrayIndex(boxX, boxY)] != '1') {
-
+            sf::Vector2u ghost = enemyLoc();
+            if (boxX == static_cast<int>(ghost.x) && boxY == static_cast<int>(ghost.y)) {
+                return; 
+            }
             if (gameMatrix[getArrayIndex(newX, newY)] == 'A') {
                 if (gameMatrix[getArrayIndex(boxX, boxY)] == 'a') {
                     gameMatrix[getArrayIndex(boxX, boxY)] = '1';
@@ -186,11 +190,19 @@ int AIGame::evaluateState() const {
 
 void AIGame::moveEnemy() {
     std::vector<sf::Vector2u> path = findPathAStar(enemyLoc(), playerLoc());
-
     // If path is valid and has at least 2 nodes (current + next)
     if (path.size() >= 2) {
+        sf::Vector2u current = enemyLoc();
         sf::Vector2u next = path[1]; // path[0] is current position
-
+        if (next.x > current.x) {
+            enemy.setTexture(*enemyRightTex);
+        } else if (next.x < current.x) {
+            enemy.setTexture(*enemyLeftTex);
+        } else if (next.y > current.y) {
+            enemy.setTexture(*enemyDownTex);
+        } else if (next.y < current.y) {
+            enemy.setTexture(*enemyUpTex);
+}
         sf::Vector2f newPos(next.x * 64, next.y * 64);
         enemy.setPosition(newPos);
     }
