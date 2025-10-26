@@ -95,6 +95,108 @@ void AIGame::movePlayer(Direction direction) {
     }
 }
 
+float AIGame::heuristic(sf::Vector2u start, sf::Vector2u goal) const{
+    return std::abs((int)start.x - (int)goal.x) + std::abs((int)start.y - (int)goal.y);
+}
+
+std::vector<sf::Vector2u> AIGame::findPathAStar(sf::Vector2u start, sf::Vector2u goal) const {
+    struct Node {
+        sf::Vector2u pos;
+        float g = 0;
+        float h = 0;
+        float f = 0;
+        Node* parent = nullptr;
+        bool walkable = true;
+    };
+
+    auto inBounds = [&](sf::Vector2u p) {
+        return (int)p.x < width() && (int)p.y < height();
+    };
+
+    auto isWalkable = [&](sf::Vector2u p) {
+        return inBounds(p) && gameMatrix[getArrayIndex(p.x, p.y)] != '#'
+        && gameMatrix[getArrayIndex(p.x, p.y)] != 'A' && gameMatrix[getArrayIndex(p.x, p.y)] != '1'; 
+    };
+
+    std::vector<std::vector<Node>> grid(height(), std::vector<Node>(width()));
+    for (int y = 0; y < height(); ++y) {
+        for (int x = 0; x < width(); ++x) {
+            grid[y][x].pos = {static_cast<unsigned>(x), static_cast<unsigned>(y)};
+            grid[y][x].walkable = isWalkable({(unsigned)x, (unsigned)y});
+        }
+    }
+
+    auto cmp = [](Node* a, Node* b) { return a->f > b->f; };
+    std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> open(cmp);
+    std::unordered_set<size_t> closed;
+
+    Node* startNode = &grid[start.y][start.x];
+
+    startNode->g = 0;
+    startNode->h = heuristic(start, goal);
+    startNode->f = startNode->h;
+    open.push(startNode);
+
+    while (!open.empty()) {
+        Node* current = open.top();
+        open.pop();
+
+        if (current->pos == goal) {
+            std::vector<sf::Vector2u> path;
+            while (current) {
+                path.push_back(current->pos);
+                current = current->parent;
+            }
+            std::reverse(path.begin(), path.end());
+            return path;
+        }
+
+        closed.insert(getArrayIndex(current->pos.x, current->pos.y));
+
+        std::vector<sf::Vector2u> neighbors = {
+            {current->pos.x + 1, current->pos.y},
+            {current->pos.x - 1, current->pos.y},
+            {current->pos.x, current->pos.y + 1},
+            {current->pos.x, current->pos.y - 1}
+        };
+
+        for (auto& npos : neighbors) {
+            if (!isWalkable(npos)) continue;
+            if (closed.count(getArrayIndex(npos.x, npos.y))) continue;
+
+            Node* neighbor = &grid[npos.y][npos.x];
+            float tentativeG = current->g + 1;
+
+            if (neighbor->parent == nullptr || tentativeG < neighbor->g) {
+                neighbor->parent = current;
+                neighbor->g = tentativeG;
+                neighbor->h = heuristic(npos, goal);
+                neighbor->f = neighbor->g + neighbor->h;
+                open.push(neighbor);
+            }
+        }
+    }
+    return {}; 
+}
+int AIGame::evaluateState() const {
+    std::vector<sf::Vector2u> path = findPathAStar(enemyLoc(), playerLoc());
+    if (path.empty()) return -1000; // unreachable = bad state
+    return -static_cast<int>(path.size()); // shorter path = better for enemy
+}
+
+void AIGame::moveEnemy() {
+    std::vector<sf::Vector2u> path = findPathAStar(enemyLoc(), playerLoc());
+
+    // If path is valid and has at least 2 nodes (current + next)
+    if (path.size() >= 2) {
+        sf::Vector2u next = path[1]; // path[0] is current position
+
+        sf::Vector2f newPos(next.x * 64, next.y * 64);
+        enemy.setPosition(newPos);
+    }
+}
+
+
 bool AIGame::isGameOver(){
     if (this -> enemyLoc() == this -> playerLoc()) {
         return true;
@@ -151,9 +253,6 @@ void AIGame::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                     break;
                 case 'G':
                     sprite = empty;
-                    sprite.setPosition(x * 64, y * 64);
-                    target.draw(sprite, states);
-                    sprite = enemy;
                     break;
                 default:
                     continue;
@@ -164,6 +263,8 @@ void AIGame::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
     }
     target.draw(player, states);
+    target.draw(enemy, states);
+
 }
 
 void AIGame::reset(const std::string& filePath) {

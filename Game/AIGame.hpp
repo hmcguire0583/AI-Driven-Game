@@ -10,6 +10,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Audio.hpp>
+#include <queue>
+#include <unordered_set>
 
 namespace SB {
 
@@ -23,6 +25,10 @@ public:
     sf::Sprite storage;
     sf::Sprite player;
     sf::Sprite enemy;
+    sf::Texture* enemyUpTex = nullptr;
+    sf::Texture* enemyDownTex = nullptr;
+    sf::Texture* enemyLeftTex = nullptr;
+    sf::Texture* enemyRightTex = nullptr;
 
     AIGame();
 
@@ -31,8 +37,10 @@ public:
     sf::Vector2u playerLoc() const;
     sf::Vector2u enemyLoc() const;
     void movePlayer(Direction direction);
-    void findPathAStar(sf::Vector2u start, sf::Vector2u goal);
-
+    float heuristic(sf::Vector2u start, sf::Vector2u goal) const;
+    std::vector<sf::Vector2u> findPathAStar(sf::Vector2u start, sf::Vector2u goal) const;
+    void moveEnemy();
+    int evaluateState() const;
     bool isWon();
     bool isGameOver();
 

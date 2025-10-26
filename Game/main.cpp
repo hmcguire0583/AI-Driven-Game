@@ -13,12 +13,17 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    sf::Texture wallT, boxT, emptyT, storageT, playerT, up, down, left, right, enemyT;
+    sf::Texture wallT, boxT, emptyT, storageT, playerT, up, down, left, right, enemyT,
+    enemyU, enemyD, enemyL, enemyR;
     if (!wallT.loadFromFile("Wall.png") ||
         !boxT.loadFromFile("Crate.png") ||
         !emptyT.loadFromFile("floor.png") ||
         !storageT.loadFromFile("Storage.png") ||
         !enemyT.loadFromFile("E_Down.png") ||
+        !enemyU.loadFromFile("E_Up.png") ||
+        !enemyD.loadFromFile("E_Down.png") ||
+        !enemyL.loadFromFile("E_Left.png") ||
+        !enemyR.loadFromFile("E_Right.png") ||
         !playerT.loadFromFile("P_Down.png") ||
         !up.loadFromFile("P_Up.png") ||
         !down.loadFromFile("P_Down.png") ||
@@ -34,6 +39,10 @@ int main(int argc, char* argv[]) {
     game.storage.setTexture(storageT);
     game.player.setTexture(playerT);
     game.enemy.setTexture(enemyT);
+    game.enemyUpTex = &enemyU;
+    game.enemyDownTex = &enemyD;
+    game.enemyLeftTex = &enemyL;
+    game.enemyRightTex = &enemyR;   
     input_file >> game;
 
     sf::Vector2u playerLocation = game.playerLoc();
@@ -43,6 +52,16 @@ int main(int argc, char* argv[]) {
     sf::Vector2u enemyLocation = game.enemyLoc();
     std::cout << "Enemy's location: (" << enemyLocation.x << ", "
               << enemyLocation.y << ")" << std::endl;
+    
+    float distance = game.heuristic(playerLocation, enemyLocation);
+    std::cout << "Heuristic (Manhattan) distance from player to enemy: " << distance << std::endl;
+
+
+    auto path = game.findPathAStar(game.enemyLoc(), game.playerLoc());
+    if (!path.empty()) {
+    std::cout << "Path length: " << path.size() << std::endl;
+}
+
 
     std::cout << game << std::endl;
 
@@ -62,6 +81,8 @@ int main(int argc, char* argv[]) {
     failSound.setBuffer(failBuffer);
     bool winSoundPlayed = false;
     bool failSoundPlayed = false;
+    sf::Clock enemyClock;
+    const sf::Time enemyMoveInterval = sf::milliseconds(500);
 
     sf::Font font;
     if (!font.loadFromFile("OpenSans-Bold.ttf")) {
@@ -72,32 +93,39 @@ int main(int argc, char* argv[]) {
                             "Block Pusher");
 
     while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            } else if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::R) {
-                    winSoundPlayed = false;
-                    failSoundPlayed = false;
-                    game.reset(level);
-                } else if (!game.isWon() && !game.isGameOver()) {
-                    if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) {
-                        game.player.setTexture(up);
-                        game.movePlayer(SB::Direction::Up);
-                    } else if (event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S) {
-                        game.player.setTexture(down);
-                        game.movePlayer(SB::Direction::Down);
-                    } else if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A) {
-                        game.player.setTexture(left);
-                        game.movePlayer(SB::Direction::Left);
-                    } else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) {
-                        game.player.setTexture(right);
-                        game.movePlayer(SB::Direction::Right);
-                    } 
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        } else if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::R) {
+                winSoundPlayed = false;
+                failSoundPlayed = false;
+                game.reset(level);
+            } else if (!game.isWon() && !game.isGameOver()) {
+                if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) {
+                    game.player.setTexture(up);
+                    game.movePlayer(SB::Direction::Up);
+                } else if (event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S) {
+                    game.player.setTexture(down);
+                    game.movePlayer(SB::Direction::Down);
+                } else if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A) {
+                    game.player.setTexture(left);
+                    game.movePlayer(SB::Direction::Left);
+                } else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) {
+                    game.player.setTexture(right);
+                    game.movePlayer(SB::Direction::Right);
                 }
             }
         }
+    }
+    if (!game.isWon() && !game.isGameOver()) {
+        if (enemyClock.getElapsedTime() >= enemyMoveInterval) {
+            game.moveEnemy();
+            enemyClock.restart();
+        }
+    }
+
 
         window.clear();
         window.draw(game);
