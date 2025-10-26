@@ -18,11 +18,15 @@ sf::Vector2u AIGame::playerLoc() const {
     int y = static_cast<int>(playerPos.y / 64);
     return sf::Vector2u(x, y);
 }
-sf::Vector2u AIGame::enemyLoc() const {
-    sf::Vector2f enemyPos = enemy.getPosition();
-    int x = static_cast<int>(enemyPos.x / 64);
-    int y = static_cast<int>(enemyPos.y / 64);
-    return sf::Vector2u(x, y);
+std::vector<sf::Vector2u> AIGame::enemyLocs() const {
+    std::vector<sf::Vector2u> positions;
+    for (const auto& e : enemies) {
+        sf::Vector2f pos = e.getPosition();
+        int x = static_cast<int>(pos.x / 64);
+        int y = static_cast<int>(pos.y / 64);
+        positions.push_back(sf::Vector2u(x, y));
+    }
+    return positions;
 }
 
 void AIGame::movePlayer(Direction direction) {
@@ -32,7 +36,6 @@ void AIGame::movePlayer(Direction direction) {
 
     auto moveP = [this](int x, int y) {
         sf::Vector2f newPos = player.getPosition() + sf::Vector2f(x, y);
-        sf::Vector2u ghost = enemyLoc();
         int newX = newPos.x / 64;
         int newY = newPos.y / 64;
         int boxX = newX + x / 64;
@@ -49,10 +52,12 @@ void AIGame::movePlayer(Direction direction) {
             gameMatrix[getArrayIndex(boxX, boxY)] != 'A' &&
             gameMatrix[getArrayIndex(boxX, boxY)] != '#' &&
             gameMatrix[getArrayIndex(boxX, boxY)] != '1') {
-            sf::Vector2u ghost = enemyLoc();
-            if (boxX == static_cast<int>(ghost.x) && boxY == static_cast<int>(ghost.y)) {
-                return; 
+            for (const auto& ghost : enemyLocs()) {
+        if (boxX == static_cast<int>(ghost.x) && boxY == static_cast<int>(ghost.y)) {
+            return; // block push into any ghost
             }
+        }
+
             if (gameMatrix[getArrayIndex(newX, newY)] == 'A') {
                 if (gameMatrix[getArrayIndex(boxX, boxY)] == 'a') {
                     gameMatrix[getArrayIndex(boxX, boxY)] = '1';
@@ -103,7 +108,7 @@ float AIGame::heuristic(sf::Vector2u start, sf::Vector2u goal) const{
     return std::abs((int)start.x - (int)goal.x) + std::abs((int)start.y - (int)goal.y);
 }
 
-std::vector<sf::Vector2u> AIGame::findPathAStar(sf::Vector2u start, sf::Vector2u goal) const {
+std::vector<sf::Vector2u> AIGame::findPathAStar(sf::Vector2u start, sf::Vector2u goal, sf::Vector2u selfPos) const {
     struct Node {
         sf::Vector2u pos;
         float g = 0;
@@ -118,9 +123,23 @@ std::vector<sf::Vector2u> AIGame::findPathAStar(sf::Vector2u start, sf::Vector2u
     };
 
     auto isWalkable = [&](sf::Vector2u p) {
-        return inBounds(p) && gameMatrix[getArrayIndex(p.x, p.y)] != '#'
-        && gameMatrix[getArrayIndex(p.x, p.y)] != 'A' && gameMatrix[getArrayIndex(p.x, p.y)] != '1'; 
-    };
+    if (!inBounds(p)) return false;
+
+    // Block static obstacles
+    char tile = gameMatrix[getArrayIndex(p.x, p.y)];
+    if (tile == '#' || tile == 'A' || tile == '1') return false;
+
+    // Block dynamic enemy positions
+    for (const auto& e : enemies) {
+        sf::Vector2f pos = e.getPosition();
+        unsigned int ex = static_cast<unsigned int>(pos.x / 64);
+        unsigned int ey = static_cast<unsigned int>(pos.y / 64);
+        if (selfPos.x == ex && selfPos.y == ey) continue;
+            if (p.x == ex && p.y == ey) return false;
+    }
+    return true;
+};
+
 
     std::vector<std::vector<Node>> grid(height(), std::vector<Node>(width()));
     for (int y = 0; y < height(); ++y) {
@@ -183,38 +202,56 @@ std::vector<sf::Vector2u> AIGame::findPathAStar(sf::Vector2u start, sf::Vector2u
     return {}; 
 }
 int AIGame::evaluateState() const {
-    std::vector<sf::Vector2u> path = findPathAStar(enemyLoc(), playerLoc());
-    if (path.empty()) return -1000; // unreachable = bad state
-    return -static_cast<int>(path.size()); // shorter path = better for enemy
+    int bestScore = -1000; // Initialize with worst-case score
+
+    for (const auto& enemyPos : enemyLocs()) {
+        std::vector<sf::Vector2u> path = findPathAStar(enemyPos, playerLoc(), enemyPos);
+        if (!path.empty()) {
+            int score = -static_cast<int>(path.size());
+            if (score > bestScore) {
+                bestScore = score; // Closer enemy = better state
+            }
+        }
+    }
+
+    return bestScore;
 }
 
-void AIGame::moveEnemy() {
-    std::vector<sf::Vector2u> path = findPathAStar(enemyLoc(), playerLoc());
-    // If path is valid and has at least 2 nodes (current + next)
-    if (path.size() >= 2) {
-        sf::Vector2u current = enemyLoc();
-        sf::Vector2u next = path[1]; // path[0] is current position
-        if (next.x > current.x) {
-            enemy.setTexture(*enemyRightTex);
-        } else if (next.x < current.x) {
-            enemy.setTexture(*enemyLeftTex);
-        } else if (next.y > current.y) {
-            enemy.setTexture(*enemyDownTex);
-        } else if (next.y < current.y) {
-            enemy.setTexture(*enemyUpTex);
-}
-        sf::Vector2f newPos(next.x * 64, next.y * 64);
-        enemy.setPosition(newPos);
+void AIGame::moveEnemies() {
+    for (auto& e : enemies) {
+        sf::Vector2u current(
+            static_cast<unsigned>(e.getPosition().x / 64),
+            static_cast<unsigned>(e.getPosition().y / 64)
+        );
+        auto path = findPathAStar(current, playerLoc(), current);
+        if (path.size() >= 2) {
+            sf::Vector2u next = path[1];
+            sf::Vector2f newPos(next.x * 64, next.y * 64);
+
+            // Set direction-based texture
+            if (next.x > current.x) e.setTexture(*enemyRightTex);
+            else if (next.x < current.x) e.setTexture(*enemyLeftTex);
+            else if (next.y > current.y) e.setTexture(*enemyDownTex);
+            else if (next.y < current.y) e.setTexture(*enemyUpTex);
+
+            e.setPosition(newPos);
+        }
     }
 }
 
 
-bool AIGame::isGameOver(){
-    if (this -> enemyLoc() == this -> playerLoc()) {
-        return true;
-    } 
+
+bool AIGame::isGameOver() {
+    for (const auto& e : enemies) {
+        sf::Vector2u ePos(
+            static_cast<unsigned>(e.getPosition().x / 64),
+            static_cast<unsigned>(e.getPosition().y / 64)
+        );
+        if (ePos == playerLoc()) return true;
+    }
     return false;
 }
+
 
 bool AIGame::isWon() {
     int numBoxes = std::count_if(gameMatrix.begin(), gameMatrix.end(), [](char c) { return c == 'A'; });
@@ -275,7 +312,10 @@ void AIGame::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
     }
     target.draw(player, states);
-    target.draw(enemy, states);
+    for (const auto& e : enemies) {
+    target.draw(e, states);
+}
+
 
 }
 
@@ -285,6 +325,7 @@ void AIGame::reset(const std::string& filePath) {
         exit(1);
     }
     player.setTexture(down);
+    enemies.clear();
 
     std::ifstream file(filePath);
     if (!file.is_open()) {
@@ -298,7 +339,8 @@ std::ifstream& operator>>(std::ifstream& in, AIGame& AIGame) {
     in >> AIGame.h >> AIGame.w;
     AIGame.gameMatrix.resize(AIGame.h * AIGame.w);
 
-    int playerX = -1, playerY = -1, enemyX = -1, enemyY = -1;
+    int playerX = -1, playerY = -1;
+
     for (int i = 0; i < AIGame.h * AIGame.w; ++i) {
         in >> AIGame.gameMatrix[i];
         if (AIGame.gameMatrix[i] == '@') {
@@ -306,8 +348,12 @@ std::ifstream& operator>>(std::ifstream& in, AIGame& AIGame) {
             playerY = i / AIGame.w;
         }
         if (AIGame.gameMatrix[i] == 'G') {
-            enemyX = i % AIGame.w;
-            enemyY = i / AIGame.w;
+            int x = i % AIGame.w;
+            int y = i / AIGame.w;
+            sf::Sprite e;
+            e.setTexture(*AIGame.enemyDownTex); // or default
+            e.setPosition(x * 64, y * 64);
+            AIGame.enemies.push_back(e);
         }
     }
 
@@ -315,13 +361,10 @@ std::ifstream& operator>>(std::ifstream& in, AIGame& AIGame) {
         sf::Vector2u playerPos(playerX, playerY);
         AIGame.player.setPosition(playerPos.x * 64, playerPos.y * 64);
     }
-    if (enemyX != -1 && enemyY != -1) {
-        sf::Vector2u enemyPos(enemyX, enemyY);
-        AIGame.enemy.setPosition(enemyPos.x * 64, enemyPos.y * 64);
-    }
 
     return in;
 }
+
 
 std::ostream& operator<<(std::ostream& out, const AIGame& AIGame) {
     out << AIGame.h << " " << AIGame.w;

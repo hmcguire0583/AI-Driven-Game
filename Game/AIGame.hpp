@@ -24,7 +24,7 @@ public:
     sf::Sprite empty;
     sf::Sprite storage;
     sf::Sprite player;
-    sf::Sprite enemy;
+    std::vector<sf::Sprite> enemies;
     sf::Texture* enemyUpTex = nullptr;
     sf::Texture* enemyDownTex = nullptr;
     sf::Texture* enemyLeftTex = nullptr;
@@ -35,11 +35,11 @@ public:
     int height() const;
     int width() const;
     sf::Vector2u playerLoc() const;
-    sf::Vector2u enemyLoc() const;
+    std::vector<sf::Vector2u> enemyLocs() const;
     void movePlayer(Direction direction);
     float heuristic(sf::Vector2u start, sf::Vector2u goal) const;
-    std::vector<sf::Vector2u> findPathAStar(sf::Vector2u start, sf::Vector2u goal) const;
-    void moveEnemy();
+    std::vector<sf::Vector2u> findPathAStar(sf::Vector2u start, sf::Vector2u goal, sf::Vector2u selfPos) const;
+    void moveEnemies();
     int evaluateState() const;
     bool isWon();
     bool isGameOver();

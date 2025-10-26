@@ -38,7 +38,6 @@ int main(int argc, char* argv[]) {
     game.empty.setTexture(emptyT);
     game.storage.setTexture(storageT);
     game.player.setTexture(playerT);
-    game.enemy.setTexture(enemyT);
     game.enemyUpTex = &enemyU;
     game.enemyDownTex = &enemyD;
     game.enemyLeftTex = &enemyL;
@@ -48,21 +47,6 @@ int main(int argc, char* argv[]) {
     sf::Vector2u playerLocation = game.playerLoc();
     std::cout << "Player's location: (" << playerLocation.x << ", "
               << playerLocation.y << ")" << std::endl;
-
-    sf::Vector2u enemyLocation = game.enemyLoc();
-    std::cout << "Enemy's location: (" << enemyLocation.x << ", "
-              << enemyLocation.y << ")" << std::endl;
-    
-    float distance = game.heuristic(playerLocation, enemyLocation);
-    std::cout << "Heuristic (Manhattan) distance from player to enemy: " << distance << std::endl;
-
-
-    auto path = game.findPathAStar(game.enemyLoc(), game.playerLoc());
-    if (!path.empty()) {
-    std::cout << "Path length: " << path.size() << std::endl;
-}
-
-
     std::cout << game << std::endl;
 
     input_file.close();
@@ -121,7 +105,7 @@ int main(int argc, char* argv[]) {
     }
     if (!game.isWon() && !game.isGameOver()) {
         if (enemyClock.getElapsedTime() >= enemyMoveInterval) {
-            game.moveEnemy();
+            game.moveEnemies();
             enemyClock.restart();
         }
     }
